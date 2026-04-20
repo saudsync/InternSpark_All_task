@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task 1 — RESTful API with Spring Boot</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e14;
+    --surface: #111620;
+    --surface2: #181f2e;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --green: #22c55e;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --code-bg: #0d1117;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .glow-orb {
+    position: fixed;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%);
+    top: -200px; left: -200px;
+    pointer-events: none;
+    z-index: 0;
+    animation: driftOrb 20s ease-in-out infinite alternate;
+  }
+  @keyframes driftOrb {
+    to { transform: translate(300px, 400px); }
+  }
+
+  /* Header */
+  header {
+    position: relative; z-index: 10;
+    padding: 60px 40px 40px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(0,212,255,0.04) 0%, transparent 100%);
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(0,212,255,0.1);
+    border: 1px solid rgba(0,212,255,0.3);
+    border-radius: 4px;
+    padding: 4px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .badge::before { content: '▶'; font-size: 8px; }
+  h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+  .subtitle {
+    font-size: 1rem;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .tech-pills {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    margin-top: 24px;
+  }
+  .pill {
+    padding: 5px 14px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .pill-blue { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.25); }
+  .pill-purple { background: rgba(124,58,237,0.15); color: #a78bfa; border: 1px solid rgba(124,58,237,0.3); }
+  .pill-green { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.25); }
+
+  /* Layout */
+  .container {
+    position: relative; z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 40px 80px;
+  }
+
+  /* Sections */
+  .section {
+    margin-bottom: 60px;
+    animation: fadeUp 0.5s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .section:nth-child(1) { animation-delay: 0.05s; }
+  .section:nth-child(2) { animation-delay: 0.10s; }
+  .section:nth-child(3) { animation-delay: 0.15s; }
+  .section:nth-child(4) { animation-delay: 0.20s; }
+  .section:nth-child(5) { animation-delay: 0.25s; }
+  .section:nth-child(6) { animation-delay: 0.30s; }
+  .section:nth-child(7) { animation-delay: 0.35s; }
+  .section:nth-child(8) { animation-delay: 0.40s; }
+
+  .section-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 28px;
+  }
+  .section-num {
+    display: flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px;
+    background: var(--accent);
+    color: var(--bg);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.01em;
+  }
+  h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    margin: 24px 0 12px;
+    letter-spacing: 0.03em;
+  }
+
+  p { color: #94a3b8; margin-bottom: 16px; line-height: 1.8; font-size: 0.95rem; }
+
+  /* Goal card */
+  .goal-card {
+    background: linear-gradient(135deg, rgba(0,212,255,0.06), rgba(124,58,237,0.06));
+    border: 1px solid rgba(0,212,255,0.2);
+    border-radius: 8px;
+    padding: 20px 24px;
+    font-size: 0.92rem;
+    color: #cbd5e1;
+    position: relative;
+    overflow: hidden;
+  }
+  .goal-card::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--accent), var(--accent2));
+  }
+
+  /* Code blocks */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    overflow-x: auto;
+    position: relative;
+    margin: 12px 0;
+  }
+  pre::before {
+    content: attr(data-lang);
+    position: absolute; top: 10px; right: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  code, pre code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.8;
+    color: #c9d1d9;
+    background: none;
+  }
+  /* Inline code */
+  p code, li code {
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.15);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-size: 0.82em;
+    color: var(--accent);
+  }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; margin: 16px 0; border-radius: 8px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; }
+  thead { background: var(--surface2); }
+  th {
+    padding: 12px 16px;
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 11px 16px;
+    font-size: 0.87rem;
+    border-bottom: 1px solid rgba(30,45,69,0.6);
+    color: #94a3b8;
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(0,212,255,0.02); }
+  td strong { color: #e2e8f0; font-weight: 600; }
+
+  /* Endpoint rows colored by method */
+  .method { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 3px; }
+  .method-post { background: rgba(34,197,94,0.15); color: #4ade80; }
+  .method-get  { background: rgba(0,212,255,0.12); color: var(--accent); }
+  .method-put  { background: rgba(245,158,11,0.15); color: #fcd34d; }
+  .method-del  { background: rgba(239,68,68,0.15); color: #f87171; }
+
+  /* File tree */
+  .filetree {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 2;
+    color: #8b949e;
+  }
+  .filetree .dir { color: var(--accent); }
+  .filetree .file { color: #c9d1d9; }
+  .filetree .comment { color: #5a6a7e; }
+
+  /* Lists */
+  ul { list-style: none; padding: 0; }
+  ul li {
+    padding: 6px 0 6px 20px;
+    position: relative;
+    font-size: 0.9rem;
+    color: #94a3b8;
+  }
+  ul li::before {
+    content: '›';
+    position: absolute; left: 0;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  /* Checklist */
+  .checklist li { padding-left: 28px; }
+  .checklist li::before {
+    content: '✓';
+    color: var(--green);
+    font-size: 12px;
+  }
+
+  /* Info boxes */
+  .info-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-size: 0.87rem;
+    color: #94a3b8;
+    margin: 16px 0;
+  }
+  .info-box strong { color: var(--yellow); }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 48px 0;
+  }
+
+  /* Keyword highlighting inside code */
+  .kw { color: #ff7b72; }
+  .st { color: #a5d6ff; }
+  .cm { color: #5a6a7e; font-style: italic; }
+  .an { color: #ffa657; }
+  .ty { color: #79c0ff; }
+  .fn { color: #d2a8ff; }
+  .nu { color: #79c0ff; }
+</style>
+</head>
+<body>
+<div class="glow-orb"></div>
+
+<header>
+  <div class="badge">Java Internship Program — 2024</div>
+  <h1>Task 1: RESTful API<br>with Spring Boot</h1>
+  <p class="subtitle">Employee CRUD API — Spring Boot 3.x / Spring Data JPA / H2 · MySQL</p>
+  <div class="tech-pills">
+    <span class="pill pill-blue">Spring Boot 3.2.x</span>
+    <span class="pill pill-purple">Spring Data JPA</span>
+    <span class="pill pill-green">Maven</span>
+    <span class="pill pill-blue">H2 / MySQL</span>
+    <span class="pill pill-purple">Jakarta Validation</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Section 1: Overview -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">1</span>
+      <h2>Project Overview</h2>
+    </div>
+    <p>A fully implemented CRUD REST API for Employee management, built using Spring Boot 3.x, Spring Web, and Spring Data JPA. The application demonstrates industry-standard practices including layered architecture, DTO patterns, input validation, proper HTTP status codes, and error handling.</p>
+    <div class="goal-card">
+      <strong>Goal:</strong> Create a production-ready RESTful API for managing Employee records, supporting Create, Read, Update, and Delete operations with proper HTTP semantics, request validation, and structured error responses.
+    </div>
+    <h3>Technology Stack</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Component</th><th>Technology / Version</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Language</strong></td><td>Java 17 (LTS)</td></tr>
+          <tr><td><strong>Framework</strong></td><td>Spring Boot 3.2.x</td></tr>
+          <tr><td><strong>Web Layer</strong></td><td>Spring Web MVC</td></tr>
+          <tr><td><strong>Persistence</strong></td><td>Spring Data JPA + Hibernate</td></tr>
+          <tr><td><strong>Database (Dev)</strong></td><td>H2 In-Memory</td></tr>
+          <tr><td><strong>Database (Prod)</strong></td><td>MySQL 8.0</td></tr>
+          <tr><td><strong>Build Tool</strong></td><td>Apache Maven 3.9</td></tr>
+          <tr><td><strong>Validation</strong></td><td>Jakarta Bean Validation</td></tr>
+          <tr><td><strong>API Testing</strong></td><td>Postman / curl</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Section 2: Setup -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">2</span>
+      <h2>Project Setup &amp; Structure</h2>
+    </div>
+    <h3>2.1 Project Initialization</h3>
+    <p>Bootstrapped via <code>start.spring.io</code> with:</p>
+    <ul>
+      <li>Spring Web — RESTful endpoints</li>
+      <li>Spring Data JPA — database access via ORM</li>
+      <li>H2 Database — embedded DB for dev/testing</li>
+      <li>Spring Boot DevTools — hot reload</li>
+      <li>Validation — Jakarta Bean Validation (JSR-380)</li>
+    </ul>
+
+    <h3>2.2 Maven pom.xml — Key Dependencies</h3>
+    <pre data-lang="XML"><code><span class="kw">&lt;dependencies&gt;</span>
+  <span class="cm">&lt;!-- Spring Web MVC --&gt;</span>
+  <span class="kw">&lt;dependency&gt;</span>
+    <span class="ty">&lt;groupId&gt;</span>org.springframework.boot<span class="ty">&lt;/groupId&gt;</span>
+    <span class="ty">&lt;artifactId&gt;</span>spring-boot-starter-web<span class="ty">&lt;/artifactId&gt;</span>
+  <span class="kw">&lt;/dependency&gt;</span>
+  <span class="cm">&lt;!-- Spring Data JPA --&gt;</span>
+  <span class="kw">&lt;dependency&gt;</span>
+    <span class="ty">&lt;groupId&gt;</span>org.springframework.boot<span class="ty">&lt;/groupId&gt;</span>
+    <span class="ty">&lt;artifactId&gt;</span>spring-boot-starter-data-jpa<span class="ty">&lt;/artifactId&gt;</span>
+  <span class="kw">&lt;/dependency&gt;</span>
+  <span class="cm">&lt;!-- H2 In-Memory Database --&gt;</span>
+  <span class="kw">&lt;dependency&gt;</span>
+    <span class="ty">&lt;groupId&gt;</span>com.h2database<span class="ty">&lt;/groupId&gt;</span>
+    <span class="ty">&lt;artifactId&gt;</span>h2<span class="ty">&lt;/artifactId&gt;</span>
+    <span class="ty">&lt;scope&gt;</span>runtime<span class="ty">&lt;/scope&gt;</span>
+  <span class="kw">&lt;/dependency&gt;</span>
+  <span class="cm">&lt;!-- Bean Validation --&gt;</span>
+  <span class="kw">&lt;dependency&gt;</span>
+    <span class="ty">&lt;groupId&gt;</span>org.springframework.boot<span class="ty">&lt;/groupId&gt;</span>
+    <span class="ty">&lt;artifactId&gt;</span>spring-boot-starter-validation<span class="ty">&lt;/artifactId&gt;</span>
+  <span class="kw">&lt;/dependency&gt;</span>
+<span class="kw">&lt;/dependencies&gt;</span></code></pre>
+
+    <h3>2.3 Project Directory Structure</h3>
+    <div class="filetree">
+<span class="dir">employee-api/</span>
+├── <span class="dir">src/</span>
+│   ├── <span class="dir">main/</span>
+│   │   ├── <span class="dir">java/com/internship/employeeapi/</span>
+│   │   │   ├── <span class="file">EmployeeApiApplication.java</span>   <span class="comment"># Main entry point</span>
+│   │   │   ├── <span class="dir">controller/</span>
+│   │   │   │   └── <span class="file">EmployeeController.java</span>   <span class="comment"># REST endpoints</span>
+│   │   │   ├── <span class="dir">dto/</span>
+│   │   │   │   ├── <span class="file">EmployeeRequestDTO.java</span>
+│   │   │   │   └── <span class="file">EmployeeResponseDTO.java</span>
+│   │   │   ├── <span class="dir">entity/</span>
+│   │   │   │   └── <span class="file">Employee.java</span>             <span class="comment"># JPA Entity</span>
+│   │   │   ├── <span class="dir">exception/</span>
+│   │   │   │   ├── <span class="file">GlobalExceptionHandler.java</span>
+│   │   │   │   └── <span class="file">ResourceNotFoundException.java</span>
+│   │   │   ├── <span class="dir">repository/</span>
+│   │   │   │   └── <span class="file">EmployeeRepository.java</span>
+│   │   │   └── <span class="dir">service/</span>
+│   │   │       ├── <span class="file">EmployeeService.java</span>      <span class="comment"># Interface</span>
+│   │   │       └── <span class="file">EmployeeServiceImpl.java</span>  <span class="comment"># Implementation</span>
+│   │   └── <span class="dir">resources/</span>
+│   │       └── <span class="file">application.properties</span>
+│   └── <span class="dir">test/</span>
+│       └── <span class="file">EmployeeServiceTest.java</span>
+└── <span class="file">pom.xml</span>
+    </div>
+
+    <h3>2.4 Application Properties</h3>
+    <pre data-lang="Properties"><code><span class="cm"># Application</span>
+spring.application.name=employee-api
+server.port=<span class="nu">8080</span>
+
+<span class="cm"># H2 In-Memory Database</span>
+spring.datasource.url=jdbc:h2:mem:employeedb
+spring.datasource.driver-class-name=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+
+<span class="cm"># JPA / Hibernate</span>
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.jpa.hibernate.ddl-auto=create-drop
+spring.jpa.show-sql=<span class="kw">true</span>
+spring.jpa.properties.hibernate.format_sql=<span class="kw">true</span>
+
+<span class="cm"># H2 Console (dev only)</span>
+spring.h2.console.enabled=<span class="kw">true</span>
+spring.h2.console.path=/h2-console</code></pre>
+  </div>
+
+  <!-- Section 3: Entity, Repository & DTOs -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">3</span>
+      <h2>Entity, Repository &amp; DTOs</h2>
+    </div>
+    <h3>3.1 Employee Entity</h3>
+    <pre data-lang="Java"><code><span class="kw">package</span> com.internship.employeeapi.entity;
+
+<span class="an">@Entity</span>
+<span class="an">@Table</span>(name = <span class="st">"employees"</span>)
+<span class="kw">public class</span> <span class="ty">Employee</span> {
+    <span class="an">@Id</span>
+    <span class="an">@GeneratedValue</span>(strategy = GenerationType.IDENTITY)
+    <span class="kw">private</span> <span class="ty">Long</span> id;
+
+    <span class="an">@NotBlank</span>(message = <span class="st">"First name is required"</span>)
+    <span class="an">@Size</span>(min = <span class="nu">2</span>, max = <span class="nu">50</span>)
+    <span class="an">@Column</span>(name = <span class="st">"first_name"</span>, nullable = <span class="kw">false</span>)
+    <span class="kw">private</span> <span class="ty">String</span> firstName;
+
+    <span class="an">@NotBlank</span>(message = <span class="st">"Last name is required"</span>)
+    <span class="an">@Column</span>(name = <span class="st">"last_name"</span>, nullable = <span class="kw">false</span>)
+    <span class="kw">private</span> <span class="ty">String</span> lastName;
+
+    <span class="an">@Email</span>(message = <span class="st">"Invalid email address"</span>)
+    <span class="an">@Column</span>(unique = <span class="kw">true</span>, nullable = <span class="kw">false</span>)
+    <span class="kw">private</span> <span class="ty">String</span> email;
+
+    <span class="an">@NotBlank</span>(message = <span class="st">"Department is required"</span>)
+    <span class="kw">private</span> <span class="ty">String</span> department;
+
+    <span class="an">@Min</span>(value = <span class="nu">0</span>, message = <span class="st">"Salary must be non-negative"</span>)
+    <span class="kw">private</span> <span class="ty">Double</span> salary;
+
+    <span class="cm">// Constructors, Getters &amp; Setters</span>
+}</code></pre>
+
+    <h3>3.2 JPA Repository</h3>
+    <pre data-lang="Java"><code><span class="an">@Repository</span>
+<span class="kw">public interface</span> <span class="ty">EmployeeRepository</span> <span class="kw">extends</span> <span class="ty">JpaRepository</span>&lt;<span class="ty">Employee</span>, <span class="ty">Long</span>&gt; {
+    <span class="ty">Optional</span>&lt;<span class="ty">Employee</span>&gt; <span class="fn">findByEmail</span>(<span class="ty">String</span> email);
+    <span class="ty">List</span>&lt;<span class="ty">Employee</span>&gt; <span class="fn">findByDepartment</span>(<span class="ty">String</span> department);
+    <span class="kw">boolean</span> <span class="fn">existsByEmail</span>(<span class="ty">String</span> email);
+}</code></pre>
+
+    <h3>3.3 EmployeeRequestDTO.java</h3>
+    <pre data-lang="Java"><code><span class="kw">public class</span> <span class="ty">EmployeeRequestDTO</span> {
+    <span class="an">@NotBlank</span>(message = <span class="st">"First name is required"</span>)
+    <span class="an">@Size</span>(min = <span class="nu">2</span>, max = <span class="nu">50</span>)
+    <span class="kw">private</span> <span class="ty">String</span> firstName;
+
+    <span class="an">@NotBlank</span>
+    <span class="kw">private</span> <span class="ty">String</span> lastName;
+
+    <span class="an">@NotBlank</span> <span class="an">@Email</span>
+    <span class="kw">private</span> <span class="ty">String</span> email;
+
+    <span class="an">@NotBlank</span>
+    <span class="kw">private</span> <span class="ty">String</span> department;
+
+    <span class="an">@Min</span>(<span class="nu">0</span>)
+    <span class="kw">private</span> <span class="ty">Double</span> salary;
+    <span class="cm">// Getters &amp; Setters</span>
+}</code></pre>
+
+    <h3>3.4 EmployeeResponseDTO.java</h3>
+    <pre data-lang="Java"><code><span class="kw">public class</span> <span class="ty">EmployeeResponseDTO</span> {
+    <span class="kw">private</span> <span class="ty">Long</span> id;
+    <span class="kw">private</span> <span class="ty">String</span> firstName, lastName, email, department;
+    <span class="kw">private</span> <span class="ty">Double</span> salary;
+
+    <span class="kw">public static</span> <span class="ty">EmployeeResponseDTO</span> <span class="fn">from</span>(<span class="ty">Employee</span> emp) {
+        <span class="ty">EmployeeResponseDTO</span> dto = <span class="kw">new</span> <span class="ty">EmployeeResponseDTO</span>();
+        dto.<span class="fn">setId</span>(emp.<span class="fn">getId</span>());
+        dto.<span class="fn">setFirstName</span>(emp.<span class="fn">getFirstName</span>());
+        dto.<span class="fn">setLastName</span>(emp.<span class="fn">getLastName</span>());
+        dto.<span class="fn">setEmail</span>(emp.<span class="fn">getEmail</span>());
+        dto.<span class="fn">setDepartment</span>(emp.<span class="fn">getDepartment</span>());
+        dto.<span class="fn">setSalary</span>(emp.<span class="fn">getSalary</span>());
+        <span class="kw">return</span> dto;
+    }
+}</code></pre>
+  </div>
+
+  <!-- Section 4: Service Layer -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">4</span>
+      <h2>Service Layer</h2>
+    </div>
+    <h3>4.1 Service Interface</h3>
+    <pre data-lang="Java"><code><span class="kw">public interface</span> <span class="ty">EmployeeService</span> {
+    <span class="ty">EmployeeResponseDTO</span>       <span class="fn">createEmployee</span>(<span class="ty">EmployeeRequestDTO</span> request);
+    <span class="ty">EmployeeResponseDTO</span>       <span class="fn">getEmployeeById</span>(<span class="ty">Long</span> id);
+    <span class="ty">List</span>&lt;<span class="ty">EmployeeResponseDTO</span>&gt;  <span class="fn">getAllEmployees</span>();
+    <span class="ty">EmployeeResponseDTO</span>       <span class="fn">updateEmployee</span>(<span class="ty">Long</span> id, <span class="ty">EmployeeRequestDTO</span> request);
+    <span class="kw">void</span>                      <span class="fn">deleteEmployee</span>(<span class="ty">Long</span> id);
+}</code></pre>
+
+    <h3>4.2 Service Implementation</h3>
+    <pre data-lang="Java"><code><span class="an">@Service</span>
+<span class="an">@Transactional</span>
+<span class="kw">public class</span> <span class="ty">EmployeeServiceImpl</span> <span class="kw">implements</span> <span class="ty">EmployeeService</span> {
+    <span class="kw">private final</span> <span class="ty">EmployeeRepository</span> repository;
+
+    <span class="kw">public</span> <span class="fn">EmployeeServiceImpl</span>(<span class="ty">EmployeeRepository</span> repository) {
+        <span class="kw">this</span>.repository = repository;
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="ty">EmployeeResponseDTO</span> <span class="fn">createEmployee</span>(<span class="ty">EmployeeRequestDTO</span> req) {
+        <span class="kw">if</span> (repository.<span class="fn">existsByEmail</span>(req.<span class="fn">getEmail</span>())) {
+            <span class="kw">throw new</span> <span class="ty">IllegalArgumentException</span>(<span class="st">"Email already in use: "</span> + req.<span class="fn">getEmail</span>());
+        }
+        <span class="ty">Employee</span> emp = <span class="kw">new</span> <span class="ty">Employee</span>(
+            req.<span class="fn">getFirstName</span>(), req.<span class="fn">getLastName</span>(),
+            req.<span class="fn">getEmail</span>(), req.<span class="fn">getDepartment</span>(), req.<span class="fn">getSalary</span>()
+        );
+        <span class="kw">return</span> <span class="ty">EmployeeResponseDTO</span>.<span class="fn">from</span>(repository.<span class="fn">save</span>(emp));
+    }
+
+    <span class="an">@Override</span>
+    <span class="an">@Transactional</span>(readOnly = <span class="kw">true</span>)
+    <span class="kw">public</span> <span class="ty">EmployeeResponseDTO</span> <span class="fn">getEmployeeById</span>(<span class="ty">Long</span> id) {
+        <span class="ty">Employee</span> emp = repository.<span class="fn">findById</span>(id)
+            .<span class="fn">orElseThrow</span>(() -> <span class="kw">new</span> <span class="ty">ResourceNotFoundException</span>(<span class="st">"Employee not found: "</span> + id));
+        <span class="kw">return</span> <span class="ty">EmployeeResponseDTO</span>.<span class="fn">from</span>(emp);
+    }
+
+    <span class="an">@Override</span>
+    <span class="an">@Transactional</span>(readOnly = <span class="kw">true</span>)
+    <span class="kw">public</span> <span class="ty">List</span>&lt;<span class="ty">EmployeeResponseDTO</span>&gt; <span class="fn">getAllEmployees</span>() {
+        <span class="kw">return</span> repository.<span class="fn">findAll</span>().stream()
+            .map(<span class="ty">EmployeeResponseDTO</span>::from)
+            .<span class="fn">toList</span>();
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public</span> <span class="ty">EmployeeResponseDTO</span> <span class="fn">updateEmployee</span>(<span class="ty">Long</span> id, <span class="ty">EmployeeRequestDTO</span> req) {
+        <span class="ty">Employee</span> emp = repository.<span class="fn">findById</span>(id)
+            .<span class="fn">orElseThrow</span>(() -> <span class="kw">new</span> <span class="ty">ResourceNotFoundException</span>(<span class="st">"Employee not found: "</span> + id));
+        emp.<span class="fn">setFirstName</span>(req.<span class="fn">getFirstName</span>());
+        emp.<span class="fn">setLastName</span>(req.<span class="fn">getLastName</span>());
+        emp.<span class="fn">setEmail</span>(req.<span class="fn">getEmail</span>());
+        emp.<span class="fn">setDepartment</span>(req.<span class="fn">getDepartment</span>());
+        emp.<span class="fn">setSalary</span>(req.<span class="fn">getSalary</span>());
+        <span class="kw">return</span> <span class="ty">EmployeeResponseDTO</span>.<span class="fn">from</span>(repository.<span class="fn">save</span>(emp));
+    }
+
+    <span class="an">@Override</span>
+    <span class="kw">public void</span> <span class="fn">deleteEmployee</span>(<span class="ty">Long</span> id) {
+        <span class="kw">if</span> (!repository.<span class="fn">existsById</span>(id)) {
+            <span class="kw">throw new</span> <span class="ty">ResourceNotFoundException</span>(<span class="st">"Employee not found: "</span> + id);
+        }
+        repository.<span class="fn">deleteById</span>(id);
+    }
+}</code></pre>
+  </div>
+
+  <!-- Section 5: Controller -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">5</span>
+      <h2>REST Controller &amp; Endpoints</h2>
+    </div>
+    <h3>5.1 API Endpoints Summary</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Description &amp; HTTP Status</th></tr></thead>
+        <tbody>
+          <tr><td><span class="method method-post">POST</span></td><td><code>/api/employees</code></td><td>Create new employee — 201 Created</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/api/employees</code></td><td>Retrieve all employees — 200 OK</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td><code>/api/employees/{id}</code></td><td>Retrieve by ID — 200 OK / 404 Not Found</td></tr>
+          <tr><td><span class="method method-put">PUT</span></td><td><code>/api/employees/{id}</code></td><td>Full update — 200 OK / 404 Not Found</td></tr>
+          <tr><td><span class="method method-del">DELETE</span></td><td><code>/api/employees/{id}</code></td><td>Delete — 204 No Content / 404 Not Found</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>5.2 Controller Implementation</h3>
+    <pre data-lang="Java"><code><span class="an">@RestController</span>
+<span class="an">@RequestMapping</span>(<span class="st">"/api/employees"</span>)
+<span class="kw">public class</span> <span class="ty">EmployeeController</span> {
+    <span class="kw">private final</span> <span class="ty">EmployeeService</span> service;
+
+    <span class="kw">public</span> <span class="fn">EmployeeController</span>(<span class="ty">EmployeeService</span> service) { <span class="kw">this</span>.service = service; }
+
+    <span class="cm">// CREATE — POST /api/employees</span>
+    <span class="an">@PostMapping</span>
+    <span class="kw">public</span> <span class="ty">ResponseEntity</span>&lt;<span class="ty">EmployeeResponseDTO</span>&gt; <span class="fn">create</span>(
+            <span class="an">@Valid</span> <span class="an">@RequestBody</span> <span class="ty">EmployeeRequestDTO</span> request) {
+        <span class="ty">EmployeeResponseDTO</span> created = service.<span class="fn">createEmployee</span>(request);
+        <span class="kw">return</span> <span class="ty">ResponseEntity</span>.<span class="fn">status</span>(<span class="ty">HttpStatus</span>.CREATED).<span class="fn">body</span>(created);
+    }
+
+    <span class="cm">// READ ALL — GET /api/employees</span>
+    <span class="an">@GetMapping</span>
+    <span class="kw">public</span> <span class="ty">ResponseEntity</span>&lt;<span class="ty">List</span>&lt;<span class="ty">EmployeeResponseDTO</span>&gt;&gt; <span class="fn">getAll</span>() {
+        <span class="kw">return</span> <span class="ty">ResponseEntity</span>.<span class="fn">ok</span>(service.<span class="fn">getAllEmployees</span>());
+    }
+
+    <span class="cm">// READ ONE — GET /api/employees/{id}</span>
+    <span class="an">@GetMapping</span>(<span class="st">"/{id}"</span>)
+    <span class="kw">public</span> <span class="ty">ResponseEntity</span>&lt;<span class="ty">EmployeeResponseDTO</span>&gt; <span class="fn">getById</span>(<span class="an">@PathVariable</span> <span class="ty">Long</span> id) {
+        <span class="kw">return</span> <span class="ty">ResponseEntity</span>.<span class="fn">ok</span>(service.<span class="fn">getEmployeeById</span>(id));
+    }
+
+    <span class="cm">// UPDATE — PUT /api/employees/{id}</span>
+    <span class="an">@PutMapping</span>(<span class="st">"/{id}"</span>)
+    <span class="kw">public</span> <span class="ty">ResponseEntity</span>&lt;<span class="ty">EmployeeResponseDTO</span>&gt; <span class="fn">update</span>(
+            <span class="an">@PathVariable</span> <span class="ty">Long</span> id,
+            <span class="an">@Valid</span> <span class="an">@RequestBody</span> <span class="ty">EmployeeRequestDTO</span> request) {
+        <span class="kw">return</span> <span class="ty">ResponseEntity</span>.<span class="fn">ok</span>(service.<span class="fn">updateEmployee</span>(id, request));
+    }
+
+    <span class="cm">// DELETE — DELETE /api/employees/{id}</span>
+    <span class="an">@DeleteMapping</span>(<span class="st">"/{id}"</span>)
+    <span class="kw">public</span> <span class="ty">ResponseEntity</span>&lt;<span class="ty">Void</span>&gt; <span class="fn">delete</span>(<span class="an">@PathVariable</span> <span class="ty">Long</span> id) {
+        service.<span class="fn">deleteEmployee</span>(id);
+        <span class="kw">return</span> <span class="ty">ResponseEntity</span>.<span class="fn">noContent</span>().<span class="fn">build</span>();
+    }
+}</code></pre>
+  </div>
+
+  <!-- Section 6: Exception Handling -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">6</span>
+      <h2>Exception Handling</h2>
+    </div>
+    <pre data-lang="Java"><code><span class="cm">// ResourceNotFoundException.java</span>
+<span class="an">@ResponseStatus</span>(<span class="ty">HttpStatus</span>.NOT_FOUND)
+<span class="kw">public class</span> <span class="ty">ResourceNotFoundException</span> <span class="kw">extends</span> <span class="ty">RuntimeException</span> {
+    <span class="kw">public</span> <span class="fn">ResourceNotFoundException</span>(<span class="ty">String</span> message) { <span class="kw">super</span>(message); }
+}
+
+<span class="cm">// GlobalExceptionHandler.java</span>
+<span class="an">@RestControllerAdvice</span>
+<span class="kw">public class</span> <span class="ty">GlobalExceptionHandler</span> {
+
+    <span class="an">@ExceptionHandler</span>(<span class="ty">ResourceNotFoundException</span>.class)
+    <span class="kw">public</span> <span class="ty">ResponseEntity</span>&lt;<span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="ty">Object</span>&gt;&gt; <span class="fn">handleNotFound</span>(<span class="ty">ResourceNotFoundException</span> ex) {
+        <span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="ty">Object</span>&gt; body = <span class="kw">new</span> <span class="ty">LinkedHashMap</span>&lt;&gt;();
+        body.<span class="fn">put</span>(<span class="st">"timestamp"</span>, <span class="ty">Instant</span>.<span class="fn">now</span>());
+        body.<span class="fn">put</span>(<span class="st">"status"</span>, <span class="nu">404</span>);
+        body.<span class="fn">put</span>(<span class="st">"error"</span>, <span class="st">"Not Found"</span>);
+        body.<span class="fn">put</span>(<span class="st">"message"</span>, ex.<span class="fn">getMessage</span>());
+        <span class="kw">return</span> <span class="ty">ResponseEntity</span>.<span class="fn">status</span>(<span class="nu">404</span>).<span class="fn">body</span>(body);
+    }
+
+    <span class="an">@ExceptionHandler</span>(<span class="ty">MethodArgumentNotValidException</span>.class)
+    <span class="kw">public</span> <span class="ty">ResponseEntity</span>&lt;<span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="ty">Object</span>&gt;&gt; <span class="fn">handleValidation</span>(<span class="ty">MethodArgumentNotValidException</span> ex) {
+        <span class="ty">List</span>&lt;<span class="ty">String</span>&gt; errors = ex.<span class="fn">getBindingResult</span>().<span class="fn">getFieldErrors</span>().stream()
+            .map(e -> e.<span class="fn">getField</span>() + <span class="st">": "</span> + e.<span class="fn">getDefaultMessage</span>())
+            .<span class="fn">toList</span>();
+        <span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="ty">Object</span>&gt; body = <span class="kw">new</span> <span class="ty">LinkedHashMap</span>&lt;&gt;();
+        body.<span class="fn">put</span>(<span class="st">"status"</span>, <span class="nu">400</span>);
+        body.<span class="fn">put</span>(<span class="st">"errors"</span>, errors);
+        <span class="kw">return</span> <span class="ty">ResponseEntity</span>.<span class="fn">badRequest</span>().<span class="fn">body</span>(body);
+    }
+}</code></pre>
+  </div>
+
+  <!-- Section 7: curl Commands -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">7</span>
+      <h2>Sample curl Commands</h2>
+    </div>
+    <h3>7.1 Create Employee (POST)</h3>
+    <pre data-lang="Shell"><code>curl -X POST http://localhost:8080/api/employees \
+  -H "Content-Type: application/json" \
+  -d '{
+    "firstName":  "Alice",
+    "lastName":   "Johnson",
+    "email":      "alice.johnson@company.com",
+    "department": "Engineering",
+    "salary":     75000.00
+  }'
+<span class="cm"># Response: 201 Created
+# { "id": 1, "firstName": "Alice", "lastName": "Johnson",
+#   "email": "alice.johnson@company.com",
+#   "department": "Engineering", "salary": 75000.0 }</span></code></pre>
+
+    <h3>7.2 Get All Employees (GET)</h3>
+    <pre data-lang="Shell"><code>curl -X GET http://localhost:8080/api/employees
+<span class="cm"># Response: 200 OK — JSON array of all employees</span></code></pre>
+
+    <h3>7.3 Get Employee by ID (GET)</h3>
+    <pre data-lang="Shell"><code>curl -X GET http://localhost:8080/api/employees/1
+<span class="cm"># 200 OK — single employee JSON
+# 404 if not found: { "status": 404, "error": "Not Found", "message": "Employee not found: 99" }</span></code></pre>
+
+    <h3>7.4 Update Employee (PUT)</h3>
+    <pre data-lang="Shell"><code>curl -X PUT http://localhost:8080/api/employees/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "firstName": "Alice", "lastName": "Johnson",
+    "email": "alice.johnson@company.com",
+    "department": "Architecture", "salary": 90000.00
+  }'
+<span class="cm"># Response: 200 OK — updated employee JSON</span></code></pre>
+
+    <h3>7.5 Delete Employee (DELETE)</h3>
+    <pre data-lang="Shell"><code>curl -X DELETE http://localhost:8080/api/employees/1
+<span class="cm"># Response: 204 No Content (empty body)
+# 404 Not Found if employee does not exist</span></code></pre>
+
+    <h3>7.6 Validation Error Example</h3>
+    <pre data-lang="Shell"><code>curl -X POST http://localhost:8080/api/employees \
+  -H "Content-Type: application/json" \
+  -d '{ "firstName": "", "email": "not-an-email" }'
+<span class="cm"># Response: 400 Bad Request
+# { "status": 400, "errors": [
+#     "firstName: First name is required",
+#     "email: Valid email is required",
+#     "lastName: Last name is required",
+#     "department: Department is required" ] }</span></code></pre>
+  </div>
+
+  <!-- Section 8: Run -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">8</span>
+      <h2>How to Run the Application</h2>
+    </div>
+    <h3>Prerequisites</h3>
+    <ul>
+      <li>Java 17 or higher installed</li>
+      <li>Maven 3.6+ (or use included <code>mvnw</code> wrapper)</li>
+      <li>Git for cloning the repository</li>
+    </ul>
+    <h3>Run Steps</h3>
+    <pre data-lang="Shell"><code>git clone https://github.com/&lt;username&gt;/employee-api.git
+cd employee-api
+mvn clean install
+mvn spring-boot:run</code></pre>
+    <div class="info-box">
+      <strong>H2 Console Access</strong><br>
+      URL: <code>http://localhost:8080/h2-console</code><br>
+      JDBC URL: <code>jdbc:h2:mem:employeedb</code> &nbsp;|&nbsp; Username: <code>sa</code> &nbsp;|&nbsp; Password: <em>(leave blank)</em>
+    </div>
+  </div>
+
+  <!-- Section 9: Deliverables -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">9</span>
+      <h2>Deliverables &amp; Submission</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Deliverable</th><th>Details</th></tr></thead>
+        <tbody>
+          <tr><td><strong>GitHub Repository</strong></td><td>Full source code at <code>https://github.com/&lt;username&gt;/employee-api</code></td></tr>
+          <tr><td><strong>README.md</strong></td><td>Setup instructions, API overview, environment configuration</td></tr>
+          <tr><td><strong>Postman Collection</strong></td><td><code>employee-api.postman_collection.json</code> — all 5 CRUD endpoints</td></tr>
+          <tr><td><strong>curl Commands</strong></td><td>Documented in Section 7</td></tr>
+          <tr><td><strong>H2 Console</strong></td><td>Accessible at <code>http://localhost:8080/h2-console</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Submission Checklist</h3>
+    <ul class="checklist">
+      <li>Source code pushed to public GitHub repository</li>
+      <li>Postman collection exported and linked</li>
+      <li>curl commands documented</li>
+      <li>Application runs locally with <code>mvn spring-boot:run</code></li>
+      <li>All 5 CRUD endpoints return correct HTTP status codes</li>
+      <li>Input validation returns structured 400 errors</li>
+      <li>404 errors return structured JSON response</li>
+    </ul>
+  </div>
+
+</div>
+</body>
+</html>

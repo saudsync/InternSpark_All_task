@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task 2 — Database Integration &amp; Migrations</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf7f2;
+    --surface: #fff;
+    --surface2: #f5f0e8;
+    --border: #e5ddd0;
+    --accent: #b45309;
+    --accent2: #92400e;
+    --green: #15803d;
+    --red: #dc2626;
+    --blue: #1d4ed8;
+    --text: #1c1917;
+    --muted: #78716c;
+    --code-bg: #1e1b18;
+    --code-text: #d6cfc4;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* Decorative corner */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; right: 0;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle at top right, rgba(180,83,9,0.07), transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Header */
+  header {
+    background: var(--code-bg);
+    padding: 56px 48px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      -45deg,
+      transparent, transparent 20px,
+      rgba(180,83,9,0.04) 20px, rgba(180,83,9,0.04) 21px
+    );
+  }
+  .header-inner { position: relative; z-index: 1; max-width: 1060px; margin: 0 auto; }
+  .tag {
+    display: inline-block;
+    background: rgba(180,83,9,0.2);
+    border: 1px solid rgba(180,83,9,0.4);
+    border-radius: 2px;
+    padding: 3px 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #f59e0b;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    color: #faf7f2;
+    line-height: 1.15;
+    margin-bottom: 10px;
+  }
+  .subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: #78716c;
+    margin-bottom: 28px;
+  }
+  .tech-grid {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .tech-item {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #d6cfc4;
+  }
+  .tech-item .tech-label { font-size: 9px; color: #57534e; text-transform: uppercase; letter-spacing: 0.08em; display: block; }
+
+  /* Layout */
+  .container {
+    max-width: 1060px;
+    margin: 0 auto;
+    padding: 48px 48px 80px;
+  }
+
+  /* Section */
+  .section { margin-bottom: 56px; }
+
+  .section-header {
+    display: flex; align-items: flex-start; gap: 20px;
+    margin-bottom: 28px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--border);
+  }
+  .section-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 3rem;
+    color: var(--border);
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: -6px;
+  }
+  h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.7rem;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  h2 span { color: var(--accent); font-style: italic; }
+  h3 {
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 24px 0 12px;
+  }
+  p { color: #57534e; margin-bottom: 14px; font-size: 0.93rem; line-height: 1.8; }
+
+  /* Goal box */
+  .goal-box {
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 16px 20px;
+    font-size: 0.9rem;
+    color: #44403c;
+    margin: 16px 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  /* Architecture diagram */
+  .arch-diagram {
+    background: var(--code-bg);
+    border-radius: 8px;
+    padding: 28px 32px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: #d6cfc4;
+    line-height: 2.2;
+    text-align: center;
+    margin: 16px 0;
+  }
+  .arch-diagram .top, .arch-diagram .bot { color: #f59e0b; font-weight: 700; }
+  .arch-diagram .mid { color: #a8a29e; }
+  .arch-diagram .pipe { color: #57534e; }
+
+  /* Code */
+  pre {
+    background: var(--code-bg);
+    border-radius: 8px;
+    padding: 22px 24px;
+    overflow-x: auto;
+    margin: 12px 0;
+    position: relative;
+  }
+  pre::before {
+    content: attr(data-lang);
+    position: absolute; top: 10px; right: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: #57534e;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  code, pre code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.77rem;
+    line-height: 1.85;
+    color: var(--code-text);
+    background: none;
+  }
+  p code, li code, td code {
+    background: rgba(180,83,9,0.08);
+    border: 1px solid rgba(180,83,9,0.15);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 0.83em;
+    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Schema cards */
+  .schema-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  @media(max-width:680px) { .schema-grid { grid-template-columns: 1fr; } }
+  .schema-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .schema-card-head {
+    background: var(--surface2);
+    padding: 10px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--border);
+  }
+  .schema-card-body {
+    padding: 12px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.76rem;
+    line-height: 2;
+    color: #57534e;
+  }
+  .schema-card-body .pk { color: var(--accent); font-weight: 700; }
+  .schema-card-body .fk { color: var(--blue); }
+  .schema-card-body .nn { color: #78716c; font-size: 0.7rem; }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; margin: 16px 0; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); }
+  thead { background: var(--surface2); }
+  th {
+    padding: 11px 16px;
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 10px 16px;
+    font-size: 0.86rem;
+    border-bottom: 1px solid var(--border);
+    color: #57534e;
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(180,83,9,0.02); }
+  td strong { color: var(--text); }
+
+  /* Migration file list */
+  .migration-list { list-style: none; padding: 0; margin: 12px 0; }
+  .migration-list li {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: #57534e;
+    transition: border-color 0.2s;
+  }
+  .migration-list li:hover { border-color: var(--accent); }
+  .version-badge {
+    background: var(--accent);
+    color: #fff;
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* Lists */
+  ul:not(.migration-list):not(.checklist) { list-style: none; padding: 0; }
+  ul:not(.migration-list):not(.checklist) li {
+    padding: 5px 0 5px 18px;
+    position: relative;
+    font-size: 0.9rem;
+    color: #57534e;
+  }
+  ul:not(.migration-list):not(.checklist) li::before {
+    content: '→';
+    position: absolute; left: 0;
+    color: var(--accent);
+    font-size: 12px;
+    top: 7px;
+  }
+
+  .checklist { list-style: none; padding: 0; }
+  .checklist li {
+    padding: 5px 0 5px 24px;
+    position: relative;
+    font-size: 0.9rem;
+    color: #57534e;
+  }
+  .checklist li::before {
+    content: '✓';
+    position: absolute; left: 0;
+    color: var(--green);
+    font-weight: 700;
+  }
+
+  /* Info box */
+  .info-box {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 6px;
+    padding: 14px 18px;
+    font-size: 0.87rem;
+    color: #78350f;
+    margin: 14px 0;
+  }
+
+  /* Inline color classes */
+  .kw { color: #e07b3c; }
+  .st { color: #a8d8a8; }
+  .cm { color: #57534e; font-style: italic; }
+  .ty { color: #79c0ff; }
+  .fn { color: #d2a8ff; }
+  .nu { color: #f59e0b; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="tag">Java Internship Program — Task 2 of 3</div>
+    <h1>Database Integration<br>&amp; Migrations</h1>
+    <p class="subtitle">Spring Data JPA + Flyway Migrations — MySQL 8.0</p>
+    <div class="tech-grid">
+      <div class="tech-item"><span><span class="tech-label">Database</span>MySQL 8.0</span></div>
+      <div class="tech-item"><span><span class="tech-label">ORM</span>Spring Data JPA</span></div>
+      <div class="tech-item"><span><span class="tech-label">Migrations</span>Flyway</span></div>
+      <div class="tech-item"><span><span class="tech-label">Seed Data</span>SQL Scripts</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Section 1 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2>Project <span>Overview</span></h2>
+    </div>
+    <p>This document covers the database integration layer for the Employee API built in Task 1. It demonstrates connecting Spring Boot to MySQL 8.0, managing schema evolution with Flyway migrations, and seeding the database with realistic sample data.</p>
+    <div class="goal-box">
+      <strong>Goal:</strong> Design a robust DB schema, integrate Spring Data JPA for ORM, apply versioned schema migrations using Flyway, and pre-populate the database with sample records to support development and testing.
+    </div>
+    <h3>Architecture — Layered Data Flow</h3>
+    <div class="arch-diagram">
+      <div class="top">[ HTTP Client / Postman ]</div>
+      <div class="pipe">│</div>
+      <div class="mid">[ EmployeeController — REST Layer ]</div>
+      <div class="pipe">│</div>
+      <div class="mid">[ EmployeeService — Business Logic ]</div>
+      <div class="pipe">│</div>
+      <div class="mid">[ EmployeeRepository — Spring Data JPA ]</div>
+      <div class="pipe">│</div>
+      <div class="mid">[ Hibernate ORM — Entity Mapping ]</div>
+      <div class="pipe">│</div>
+      <div class="mid">[ Flyway — Schema Migrations ]</div>
+      <div class="pipe">│</div>
+      <div class="bot">[ MySQL 8.0 — Relational Database ]</div>
+    </div>
+  </div>
+
+  <!-- Section 2 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2>Database <span>Schema Design</span></h2>
+    </div>
+    <p>Two tables: <code>employees</code> (core entity) and <code>departments</code> (lookup table). A foreign key links each employee to their department, enforcing referential integrity.</p>
+    <div class="schema-grid">
+      <div class="schema-card">
+        <div class="schema-card-head">TABLE: departments</div>
+        <div class="schema-card-body">
+          <div><span class="pk">id</span>           BIGINT PK AI</div>
+          <div>name         VARCHAR(100) NN</div>
+          <div>description  TEXT</div>
+          <div>created_at   TIMESTAMP DEFAULT NOW()</div>
+        </div>
+      </div>
+      <div class="schema-card">
+        <div class="schema-card-head">TABLE: employees</div>
+        <div class="schema-card-body">
+          <div><span class="pk">id</span>             BIGINT PK AI</div>
+          <div>first_name     VARCHAR(50) NN</div>
+          <div>last_name      VARCHAR(50) NN</div>
+          <div>email          VARCHAR(100) UNIQUE NN</div>
+          <div>phone          VARCHAR(20)</div>
+          <div>hire_date      DATE NN</div>
+          <div>salary         DECIMAL(12,2)</div>
+          <div><span class="fk">department_id  BIGINT FK → departments.id</span></div>
+          <div>created_at     TIMESTAMP DEFAULT NOW()</div>
+          <div>updated_at     TIMESTAMP</div>
+        </div>
+      </div>
+    </div>
+    <p>One department has many employees (1:N). The <code>employees.department_id</code> foreign key references <code>departments.id</code> with <code>ON DELETE RESTRICT</code>.</p>
+  </div>
+
+  <!-- Section 3 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2>MySQL <span>Configuration</span></h2>
+    </div>
+    <h3>3.1 Create Database &amp; User</h3>
+    <pre data-lang="SQL"><code><span class="cm">-- Run as MySQL root user</span>
+<span class="kw">CREATE DATABASE IF NOT EXISTS</span> employee_db
+  <span class="kw">CHARACTER SET</span> utf8mb4
+  <span class="kw">COLLATE</span> utf8mb4_unicode_ci;
+
+<span class="kw">CREATE USER</span> <span class="st">'empapp'</span>@<span class="st">'localhost'</span> <span class="kw">IDENTIFIED BY</span> <span class="st">'SecurePass123!'</span>;
+<span class="kw">GRANT</span> SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, DROP, REFERENCES
+  <span class="kw">ON</span> employee_db.* <span class="kw">TO</span> <span class="st">'empapp'</span>@<span class="st">'localhost'</span>;
+<span class="kw">FLUSH PRIVILEGES</span>;</code></pre>
+
+    <h3>3.2 application.properties (MySQL Profile)</h3>
+    <pre data-lang="Properties"><code><span class="cm"># MySQL DataSource</span>
+spring.datasource.url=jdbc:mysql://localhost:3306/employee_db\
+  ?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+spring.datasource.username=empapp
+spring.datasource.password=SecurePass123!
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+<span class="cm"># HikariCP Connection Pool</span>
+spring.datasource.hikari.maximum-pool-size=<span class="nu">10</span>
+spring.datasource.hikari.minimum-idle=<span class="nu">2</span>
+spring.datasource.hikari.connection-timeout=<span class="nu">30000</span>
+
+<span class="cm"># JPA / Hibernate</span>
+spring.jpa.database-platform=org.hibernate.dialect.MySQLDialect
+spring.jpa.hibernate.ddl-auto=validate   <span class="cm"># Flyway owns DDL</span>
+spring.jpa.show-sql=true
+
+<span class="cm"># Flyway</span>
+spring.flyway.enabled=true
+spring.flyway.locations=classpath:db/migration
+spring.flyway.baseline-on-migrate=true</code></pre>
+
+    <h3>3.3 MySQL &amp; Flyway Dependencies (pom.xml)</h3>
+    <pre data-lang="XML"><code><span class="cm">&lt;!-- MySQL Connector/J --&gt;</span>
+<span class="kw">&lt;dependency&gt;</span>
+  <span class="ty">&lt;groupId&gt;</span>com.mysql<span class="ty">&lt;/groupId&gt;</span>
+  <span class="ty">&lt;artifactId&gt;</span>mysql-connector-j<span class="ty">&lt;/artifactId&gt;</span>
+  <span class="ty">&lt;scope&gt;</span>runtime<span class="ty">&lt;/scope&gt;</span>
+<span class="kw">&lt;/dependency&gt;</span>
+<span class="cm">&lt;!-- Flyway Core --&gt;</span>
+<span class="kw">&lt;dependency&gt;</span>
+  <span class="ty">&lt;groupId&gt;</span>org.flywaydb<span class="ty">&lt;/groupId&gt;</span>
+  <span class="ty">&lt;artifactId&gt;</span>flyway-core<span class="ty">&lt;/artifactId&gt;</span>
+<span class="kw">&lt;/dependency&gt;</span>
+<span class="cm">&lt;!-- Flyway MySQL support (Spring Boot 3.x) --&gt;</span>
+<span class="kw">&lt;dependency&gt;</span>
+  <span class="ty">&lt;groupId&gt;</span>org.flywaydb<span class="ty">&lt;/groupId&gt;</span>
+  <span class="ty">&lt;artifactId&gt;</span>flyway-mysql<span class="ty">&lt;/artifactId&gt;</span>
+<span class="kw">&lt;/dependency&gt;</span></code></pre>
+  </div>
+
+  <!-- Section 4 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2>Flyway <span>Migration Files</span></h2>
+    </div>
+    <div class="info-box">
+      <strong>Naming Convention:</strong> <code>V{version}__{description}.sql</code><br>
+      Location: <code>src/main/resources/db/migration/</code><br>
+      Flyway runs files in version order and tracks them in <code>flyway_schema_history</code>.
+    </div>
+
+    <h3>Migration File Structure</h3>
+    <ul class="migration-list">
+      <li><span class="version-badge">V1</span>V1__Create_departments_table.sql</li>
+      <li><span class="version-badge">V2</span>V2__Create_employees_table.sql</li>
+      <li><span class="version-badge">V3</span>V3__Add_indexes.sql</li>
+      <li><span class="version-badge">V4</span>V4__Seed_sample_data.sql</li>
+    </ul>
+
+    <h3>V1 — Create Departments Table</h3>
+    <pre data-lang="SQL"><code><span class="cm">-- V1: Create the departments reference table</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> departments (
+  id           BIGINT          <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+  name         VARCHAR(<span class="nu">100</span>)    <span class="kw">NOT NULL</span>,
+  description  TEXT,
+  created_at   TIMESTAMP       <span class="kw">NOT NULL DEFAULT CURRENT_TIMESTAMP</span>,
+  <span class="kw">CONSTRAINT</span> pk_departments <span class="kw">PRIMARY KEY</span> (id),
+  <span class="kw">CONSTRAINT</span> uq_dept_name   <span class="kw">UNIQUE</span> (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;</code></pre>
+
+    <h3>V2 — Create Employees Table</h3>
+    <pre data-lang="SQL"><code><span class="cm">-- V2: Create the main employees table with FK to departments</span>
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> employees (
+  id             BIGINT          <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+  first_name     VARCHAR(<span class="nu">50</span>)     <span class="kw">NOT NULL</span>,
+  last_name      VARCHAR(<span class="nu">50</span>)     <span class="kw">NOT NULL</span>,
+  email          VARCHAR(<span class="nu">100</span>)    <span class="kw">NOT NULL</span>,
+  phone          VARCHAR(<span class="nu">20</span>),
+  hire_date      DATE            <span class="kw">NOT NULL</span>,
+  salary         DECIMAL(<span class="nu">12</span>, <span class="nu">2</span>)  <span class="kw">NOT NULL DEFAULT</span> <span class="nu">0.00</span>,
+  department_id  BIGINT,
+  created_at     TIMESTAMP       <span class="kw">NOT NULL DEFAULT CURRENT_TIMESTAMP</span>,
+  updated_at     TIMESTAMP       <span class="kw">ON UPDATE CURRENT_TIMESTAMP</span>,
+  <span class="kw">CONSTRAINT</span> pk_employees    <span class="kw">PRIMARY KEY</span> (id),
+  <span class="kw">CONSTRAINT</span> uq_emp_email    <span class="kw">UNIQUE</span> (email),
+  <span class="kw">CONSTRAINT</span> fk_emp_dept     <span class="kw">FOREIGN KEY</span> (department_id)
+                             <span class="kw">REFERENCES</span> departments(id)
+                             <span class="kw">ON DELETE RESTRICT</span>
+                             <span class="kw">ON UPDATE CASCADE</span>
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;</code></pre>
+
+    <h3>V3 — Add Performance Indexes</h3>
+    <pre data-lang="SQL"><code><span class="cm">-- V3: Indexes for common query patterns</span>
+<span class="kw">CREATE INDEX</span> idx_emp_department   <span class="kw">ON</span> employees(department_id);
+<span class="kw">CREATE INDEX</span> idx_emp_hire_date    <span class="kw">ON</span> employees(hire_date);
+<span class="kw">CREATE INDEX</span> idx_emp_fullname     <span class="kw">ON</span> employees(last_name, first_name);</code></pre>
+
+    <h3>V4 — Seed Sample Data</h3>
+    <pre data-lang="SQL"><code><span class="cm">-- V4: Seed reference and sample employee data</span>
+<span class="kw">INSERT INTO</span> departments (name, description) <span class="kw">VALUES</span>
+  (<span class="st">'Engineering'</span>,    <span class="st">'Software development and architecture'</span>),
+  (<span class="st">'Human Resources'</span>, <span class="st">'Recruitment, payroll, and compliance'</span>),
+  (<span class="st">'Marketing'</span>,      <span class="st">'Brand, campaigns, and digital growth'</span>),
+  (<span class="st">'Finance'</span>,        <span class="st">'Budgeting, accounting, and reporting'</span>),
+  (<span class="st">'Operations'</span>,     <span class="st">'Facilities, logistics, and support'</span>);
+
+<span class="kw">INSERT INTO</span> employees (first_name, last_name, email, phone, hire_date, salary, department_id) <span class="kw">VALUES</span>
+  (<span class="st">'Alice'</span>,  <span class="st">'Johnson'</span>,  <span class="st">'alice.johnson@company.com'</span>,  <span class="st">'+1-555-0101'</span>, <span class="st">'2022-03-14'</span>, <span class="nu">85000.00</span>, <span class="nu">1</span>),
+  (<span class="st">'Bob'</span>,    <span class="st">'Martinez'</span>, <span class="st">'bob.martinez@company.com'</span>,   <span class="st">'+1-555-0102'</span>, <span class="st">'2021-07-01'</span>, <span class="nu">78000.00</span>, <span class="nu">1</span>),
+  (<span class="st">'Carol'</span>,  <span class="st">'Smith'</span>,    <span class="st">'carol.smith@company.com'</span>,    <span class="st">'+1-555-0103'</span>, <span class="st">'2023-01-20'</span>, <span class="nu">65000.00</span>, <span class="nu">2</span>),
+  (<span class="st">'David'</span>,  <span class="st">'Lee'</span>,      <span class="st">'david.lee@company.com'</span>,      <span class="st">'+1-555-0104'</span>, <span class="st">'2020-11-08'</span>, <span class="nu">92000.00</span>, <span class="nu">3</span>),
+  (<span class="st">'Eva'</span>,    <span class="st">'Brown'</span>,    <span class="st">'eva.brown@company.com'</span>,      <span class="st">'+1-555-0105'</span>, <span class="st">'2023-06-15'</span>, <span class="nu">70000.00</span>, <span class="nu">4</span>),
+  (<span class="st">'Frank'</span>,  <span class="st">'Wilson'</span>,   <span class="st">'frank.wilson@company.com'</span>,   <span class="st">'+1-555-0106'</span>, <span class="st">'2019-04-22'</span>, <span class="nu">110000.00</span>, <span class="nu">1</span>),
+  (<span class="st">'Grace'</span>,  <span class="st">'Taylor'</span>,   <span class="st">'grace.taylor@company.com'</span>,   <span class="st">'+1-555-0107'</span>, <span class="st">'2022-09-30'</span>, <span class="nu">68000.00</span>, <span class="nu">5</span>),
+  (<span class="st">'Henry'</span>,  <span class="st">'Anderson'</span>, <span class="st">'henry.anderson@company.com'</span>, <span class="st">'+1-555-0108'</span>, <span class="st">'2021-02-14'</span>, <span class="nu">75000.00</span>, <span class="nu">2</span>);</code></pre>
+  </div>
+
+  <!-- Section 5 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2>Updated JPA <span>Entities</span></h2>
+    </div>
+    <h3>5.1 Department Entity</h3>
+    <pre data-lang="Java"><code><span class="kw">@Entity</span>
+<span class="kw">@Table</span>(name = <span class="st">"departments"</span>)
+<span class="kw">public class</span> <span class="ty">Department</span> {
+    <span class="kw">@Id</span> <span class="kw">@GeneratedValue</span>(strategy = GenerationType.IDENTITY)
+    <span class="kw">private</span> Long id;
+
+    <span class="kw">@Column</span>(nullable = false, unique = true, length = 100)
+    <span class="kw">private</span> String name;
+
+    <span class="kw">@Column</span>(columnDefinition = <span class="st">"TEXT"</span>)
+    <span class="kw">private</span> String description;
+
+    <span class="kw">@Column</span>(name = <span class="st">"created_at"</span>, updatable = false)
+    <span class="kw">private</span> LocalDateTime createdAt;
+
+    <span class="kw">@OneToMany</span>(mappedBy = <span class="st">"department"</span>, fetch = FetchType.LAZY)
+    <span class="kw">private</span> List&lt;Employee&gt; employees;
+
+    <span class="kw">@PrePersist</span>
+    <span class="kw">protected void</span> onCreate() { createdAt = LocalDateTime.now(); }
+}</code></pre>
+
+    <h3>5.2 Employee Entity (Updated with FK)</h3>
+    <pre data-lang="Java"><code><span class="kw">@Entity</span>
+<span class="kw">@Table</span>(name = <span class="st">"employees"</span>)
+<span class="kw">public class</span> <span class="ty">Employee</span> {
+    <span class="kw">@Id</span> <span class="kw">@GeneratedValue</span>(strategy = GenerationType.IDENTITY)
+    <span class="kw">private</span> Long id;
+    <span class="kw">@Column</span>(name = <span class="st">"first_name"</span>, nullable = false, length = 50)
+    <span class="kw">private</span> String firstName;
+    <span class="kw">@Column</span>(name = <span class="st">"last_name"</span>, nullable = false, length = 50)
+    <span class="kw">private</span> String lastName;
+    <span class="kw">@Column</span>(unique = true, nullable = false, length = 100)
+    <span class="kw">private</span> String email;
+    <span class="kw">@Column</span>(length = 20)
+    <span class="kw">private</span> String phone;
+    <span class="kw">@Column</span>(name = <span class="st">"hire_date"</span>, nullable = false)
+    <span class="kw">private</span> LocalDate hireDate;
+    <span class="kw">@Column</span>(precision = 12, scale = 2)
+    <span class="kw">private</span> BigDecimal salary;
+
+    <span class="kw">@ManyToOne</span>(fetch = FetchType.LAZY)
+    <span class="kw">@JoinColumn</span>(name = <span class="st">"department_id"</span>,
+        foreignKey = <span class="kw">@ForeignKey</span>(name = <span class="st">"fk_emp_dept"</span>))
+    <span class="kw">private</span> Department department;
+
+    <span class="kw">@PrePersist</span>  <span class="kw">protected void</span> onCreate() { createdAt = LocalDateTime.now(); }
+    <span class="kw">@PreUpdate</span>   <span class="kw">protected void</span> onUpdate() { updatedAt = LocalDateTime.now(); }
+}</code></pre>
+  </div>
+
+  <!-- Section 6 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2>Sample Queries <span>&amp; Verification</span></h2>
+    </div>
+    <h3>6.1 Verify Flyway Migration History</h3>
+    <pre data-lang="SQL"><code><span class="kw">SELECT</span> version, description, script, success, installed_on
+<span class="kw">FROM</span> flyway_schema_history
+<span class="kw">ORDER BY</span> installed_rank;
+<span class="cm">-- version │ description                   │ success │ installed_on
+-- 1       │ Create departments table      │ 1       │ 2024-01-15 ...
+-- 2       │ Create employees table        │ 1       │ 2024-01-15 ...
+-- 3       │ Add indexes                   │ 1       │ 2024-01-15 ...
+-- 4       │ Seed sample data              │ 1       │ 2024-01-15 ...</span></code></pre>
+
+    <h3>6.2 Count Employees Per Department</h3>
+    <pre data-lang="SQL"><code><span class="kw">SELECT</span> d.name <span class="kw">AS</span> department,
+       COUNT(e.id) <span class="kw">AS</span> employee_count,
+       AVG(e.salary) <span class="kw">AS</span> avg_salary
+<span class="kw">FROM</span> departments d
+<span class="kw">LEFT JOIN</span> employees e <span class="kw">ON</span> e.department_id = d.id
+<span class="kw">GROUP BY</span> d.id, d.name
+<span class="kw">ORDER BY</span> employee_count <span class="kw">DESC</span>;
+<span class="cm">-- Engineering    │ 3 │ 91000.00
+-- Human Resources│ 2 │ 71500.00
+-- Marketing      │ 1 │ 92000.00</span></code></pre>
+
+    <h3>6.3 Salary Range Filter</h3>
+    <pre data-lang="SQL"><code><span class="kw">SELECT</span> CONCAT(e.first_name, <span class="st">' '</span>, e.last_name) <span class="kw">AS</span> full_name,
+       e.email, e.hire_date, e.salary, d.name <span class="kw">AS</span> department
+<span class="kw">FROM</span> employees e
+<span class="kw">JOIN</span> departments d <span class="kw">ON</span> d.id = e.department_id
+<span class="kw">WHERE</span> e.hire_date &gt;= <span class="st">'2022-01-01'</span>
+  <span class="kw">AND</span> e.salary &gt; <span class="nu">70000.00</span>
+<span class="kw">ORDER BY</span> e.salary <span class="kw">DESC</span>;</code></pre>
+
+    <h3>6.4 Custom Repository Queries</h3>
+    <pre data-lang="Java"><code><span class="kw">@Repository</span>
+<span class="kw">public interface</span> EmployeeRepository <span class="kw">extends</span> JpaRepository&lt;Employee, Long&gt; {
+
+    List&lt;Employee&gt; findByDepartmentName(String departmentName);
+
+    <span class="kw">@Query</span>(<span class="st">"SELECT e FROM Employee e WHERE e.salary BETWEEN :min AND :max"</span>)
+    List&lt;Employee&gt; findBySalaryRange(
+        <span class="kw">@Param</span>(<span class="st">"min"</span>) BigDecimal min,
+        <span class="kw">@Param</span>(<span class="st">"max"</span>) BigDecimal max);
+
+    <span class="kw">@Query</span>(value = <span class="st">"SELECT * FROM employees WHERE hire_date >= :date"</span>, nativeQuery = true)
+    List&lt;Employee&gt; findRecentHires(<span class="kw">@Param</span>(<span class="st">"date"</span>) LocalDate date);
+
+    <span class="kw">@Query</span>(<span class="st">"SELECT COUNT(e) FROM Employee e WHERE e.department.id = :deptId"</span>)
+    Long countByDepartmentId(<span class="kw">@Param</span>(<span class="st">"deptId"</span>) Long deptId);
+}</code></pre>
+  </div>
+
+  <!-- Section 7 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2>Expected Startup <span>Log Output</span></h2>
+    </div>
+    <pre data-lang="Log"><code>INFO  o.f.core.internal.command.DbValidate : Successfully validated 4 migrations
+INFO  o.f.core.internal.command.DbMigrate  : Current version of schema `employee_db`: &lt;&lt; Empty Schema &gt;&gt;
+INFO  o.f.core.internal.command.DbMigrate  : Migrating schema to version "1 - Create departments table"
+INFO  o.f.core.internal.command.DbMigrate  : Migrating schema to version "2 - Create employees table"
+INFO  o.f.core.internal.command.DbMigrate  : Migrating schema to version "3 - Add indexes"
+INFO  o.f.core.internal.command.DbMigrate  : Migrating schema to version "4 - Seed sample data"
+INFO  o.f.core.internal.command.DbMigrate  : Successfully applied 4 migrations to schema `employee_db`
+INFO  o.s.b.w.embedded.tomcat.TomcatWebServer : Tomcat started on port(s): 8080
+INFO  c.i.e.EmployeeApiApplication          : Started EmployeeApiApplication in 3.412 seconds</code></pre>
+  </div>
+
+  <!-- Section 8 -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-num">08</span>
+      <h2>Deliverables <span>&amp; Submission</span></h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Deliverable</th><th>Details / Location</th></tr></thead>
+        <tbody>
+          <tr><td><strong>DB Migration Files</strong></td><td><code>src/main/resources/db/migration/</code> — V1–V4 SQL scripts</td></tr>
+          <tr><td><strong>Entity Classes</strong></td><td>Department.java and Employee.java with full JPA annotations</td></tr>
+          <tr><td><strong>Repository Layer</strong></td><td>EmployeeRepository.java with JPQL and native queries</td></tr>
+          <tr><td><strong>application.properties</strong></td><td>MySQL datasource, HikariCP pool, and Flyway config</td></tr>
+          <tr><td><strong>Sample Queries</strong></td><td>Documented in Section 6</td></tr>
+          <tr><td><strong>GitHub Repo</strong></td><td><code>https://github.com/&lt;username&gt;/employee-api</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Submission Checklist</h3>
+    <ul class="checklist">
+      <li>Four Flyway migration SQL files (V1–V4) pushed to GitHub</li>
+      <li>Department and Employee JPA entities with relationship mapping</li>
+      <li>EmployeeRepository with JPQL and native queries</li>
+      <li>application.properties configured for MySQL + Flyway</li>
+      <li>flyway_schema_history shows all 4 migrations successful</li>
+      <li>Sample queries documented and tested in MySQL CLI</li>
+      <li>Application starts cleanly — Flyway log matches Section 7</li>
+    </ul>
+  </div>
+
+</div>
+</body>
+</html>
